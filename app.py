@@ -1,24 +1,22 @@
-
-  import streamlit as st
+import os
+import PyPDF2
+# هتحتاج مكتبة الذكاء الاصطناعي اللي كنا شغالين بيها (مثلاً Gemini)
 import google.generativeai as genai
-from PyPDF2 import PdfReader
 
-st.set_page_config(page_title="بوت المنهج الذكي", layout="wide")
-st.title("📚 بوت المنهج الذكي (إصدار الـ PDF)")
+# دالة لقراءة كل النصوص من ملفات الـ PDF في المجلد
+def load_all_pdfs():
+    context = ""
+    for file in os.listdir():
+        if file.endswith(".pdf"):
+            with open(file, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for page in pdf_reader.pages:
+                    context += page.extract_text()
+    return context
 
-# السطر اللي جاي ده هو اللي هنحط فيه المفتاح لما نجيبه
-api_key = "ضع_المفتاح_هنا" 
-genai.configure(api_key=api_key)
+# هنا بنجهز البوت بالمعلومات اللي قراها
+all_info = load_all_pdfs()
 
-uploaded_files = st.file_uploader("ارفع ملفات المنهج (PDF)", type="pdf", accept_multiple_files=True)
+# كود الرد (الرد بناءً على الـ all_info)
+# ... كمل باقي كود الربط بـ Telegram أو الشات بتاعك ...
 
-if uploaded_files:
-    all_text = ""
-    for file in uploaded_files:
-        reader = PdfReader(file)
-        for page in reader.pages:
-            all_text += page.extract_text()
-    
-    st.success("تم تجهيز المنهج بنجاح!")
-    user_question = st.text_input("اسأل أي سؤال في المنهج:")
-    
