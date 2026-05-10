@@ -22,8 +22,3 @@ if uploaded_files:
     st.success("تم تجهيز المنهج بنجاح!")
     user_question = st.text_input("اسأل أي سؤال في المنهج:")
     
-    if user_question:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(f"بناءً على النص المرفق، أجب بوضوح: {all_text}\n\nالسؤال: {user_question}")
-        st.markdown(f"**الإجابة:**\n{response.text}")
-        
