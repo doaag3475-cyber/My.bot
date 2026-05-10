@@ -1,22 +1,27 @@
-import os
-import PyPDF2
-# هتحتاج مكتبة الذكاء الاصطناعي اللي كنا شغالين بيها (مثلاً Gemini)
+import telebot
 import google.generativeai as genai
 
-# دالة لقراءة كل النصوص من ملفات الـ PDF في المجلد
-def load_all_pdfs():
-    context = ""
-    for file in os.listdir():
-        if file.endswith(".pdf"):
-            with open(file, 'rb') as f:
-                pdf_reader = PyPDF2.PdfReader(f)
-                for page in pdf_reader.pages:
-                    context += page.extract_text()
-    return context
+# 1. حطي التوكن ومفتاح جيمناي هنا
+TOKEN = "75432XXXXX:AAXXXXX..." 
+GEMINI_KEY = "AIzaSyXXXXX..."
 
-# هنا بنجهز البوت بالمعلومات اللي قراها
-all_info = load_all_pdfs()
+genai.configure(api_key=GEMINI_KEY)
+model = genai.GenerativeModel('gemini-pro')
+bot = telebot.TeleBot(TOKEN)
 
-# كود الرد (الرد بناءً على الـ all_info)
-# ... كمل باقي كود الربط بـ Telegram أو الشات بتاعك ...
+# 2. هنا بقى اكتبي كل المعلومات اللي في الـ PDF (اكتبيها بايدك باختصار)
+knowledge = """
+اكتبي هنا كل المعلومات اللي كانت في الملفات.. 
+مثلاً: البوت ده بيساعد في كذا.. 
+ومواعيدنا كذا.. 
+والأسعار كذا..
+كل اللي تعرفيه اكتبيه هنا بين العلامات دي.
+"""
 
+@bot.message_handler(func=lambda m: True)
+def reply(message):
+    prompt = f"بناءً على المعلومات دي: {knowledge}\n\nجاوب على المستخدم: {message.text}"
+    response = model.generate_content(prompt)
+    bot.reply_to(message, response.text)
+
+bot.infinity_polling()
