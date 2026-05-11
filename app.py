@@ -1,22 +1,143 @@
+```python
 import telebot
 import google.generativeai as genai
+import PyPDF2
+import os
 
-TOKEN = "8645642925:AAH2hPxrmF0WyHul sBtU PDWk8lihMzq8ppI" 
-GEMINI_KEY = "AIzaSyAolC_kO-p4d9wfL9N1d-llSsLmZ4bLtLQ"
+# ====================================
+# TOKENS
+# ====================================
+
+TOKEN = "PUT_TELEGRAM_TOKEN_HERE"
+GEMINI_KEY = "PUT_GEMINI_KEY_HERE"
+
+# ====================================
+# GEMINI SETUP
+# ====================================
 
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-pro')
+
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# ====================================
+# TELEGRAM BOT
+# ====================================
+
 bot = telebot.TeleBot(TOKEN)
 
-knowledge = "أهلاً بك! أنا بوت دعاء الذكي، كيف يمكنني مساعدتك اليوم؟"
+# ====================================
+# PDF FILES
+# ====================================
+
+pdf_files = [
+    "العناصره الغذائية والهضم.pdf",
+    "هضم وتمثيل الدهون 26.pdf",
+    "محاضرة هضم ةتمثيل الكربوهيردات.pdf",
+    "الماء وصحةالانسان.pdf",
+    "البروتين.pdf"
+]
+
+# ====================================
+# READ PDF FUNCTION
+# ====================================
+
+def read_pdf(file_path):
+
+    text = ""
+
+    try:
+
+        with open(file_path, "rb") as file:
+
+            reader = PyPDF2.PdfReader(file)
+
+            for page in reader.pages:
+
+                extracted = page.extract_text()
+
+                if extracted:
+                    text += extracted + "\n"
+
+    except Exception as e:
+
+        print(f"Error reading {file_path}: {e}")
+
+    return text
+
+# ====================================
+# LOAD ALL LECTURES
+# ====================================
+
+knowledge = ""
+
+for pdf in pdf_files:
+
+    if os.path.exists(pdf):
+
+        print(f"Loading: {pdf}")
+
+        knowledge += read_pdf(pdf)
+
+        knowledge += "\n\n"
+
+    else:
+
+        print(f"File not found: {pdf}")
+
+# ====================================
+# START COMMAND
+# ====================================
+
+@bot.message_handler(commands=['start'])
+def start(message):
+
+    bot.reply_to(
+        message,
+        "أهلاً 👋\nأنا بوت التغذية الذكي.\nاسألني أي سؤال من المحاضرات."
+    )
+
+# ====================================
+# MAIN CHAT
+# ====================================
 
 @bot.message_handler(func=lambda m: True)
 def reply(message):
+
     try:
-        full_prompt = f"استخدم هذه المعلومات للرد: {knowledge}\n\nالسؤال: {message.text}"
-        response = model.generate_content(full_prompt)
+
+        prompt = f"""
+أنت مساعد ذكي متخصص في مادة الغذاء والتغذية.
+
+اعتمد فقط على المعلومات الموجودة داخل المحاضرات التالية.
+
+إذا كانت الإجابة غير موجودة داخل المنهج قل:
+"المعلومة غير موجودة في المحاضرات المتاحة."
+
+المحاضرات:
+{knowledge}
+
+السؤال:
+{message.text}
+"""
+
+        response = model.generate_content(prompt)
+
         bot.reply_to(message, response.text)
-    except:
-        bot.reply_to(message, "أنا معاك، اسألني أي حاجة!")
+
+    except Exception as e:
+
+        print(e)
+
+        bot.reply_to(
+            message,
+            "حدث خطأ أثناء معالجة السؤال."
+        )
+
+# ====================================
+# RUN BOT
+# ====================================
+
+print("Bot is running...")
 
 bot.infinity_polling()
+```
